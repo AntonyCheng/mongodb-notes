@@ -5,6 +5,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import top.sharehome.mongodbdemo.model.entity.Comment;
 import top.sharehome.mongodbdemo.service.CommentService;
+import top.sharehome.mongodbdemo.service.CommentUpgradeService;
+import top.sharehome.mongodbdemo.service.impl.CommentServiceImpl;
+import top.sharehome.mongodbdemo.service.impl.CommentUpgradeServiceImpl;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -14,6 +17,9 @@ class MongodbDemoApplicationTests {
 
     @Resource
     private CommentService commentService;
+
+    @Resource
+    private CommentUpgradeService commentUpgradeService;
 
     @Test
     void save() {
@@ -26,33 +32,42 @@ class MongodbDemoApplicationTests {
                 .setState("1")
                 .setLikeNum(0)
                 .setReplyNum(0);
-        commentService.saveComment(comment);
+//        commentService.saveComment(comment);
+        commentUpgradeService.saveComment(comment);
     }
 
     @Test
     void list() {
-        System.out.println(commentService.findCommentList());
+//        System.out.println(commentService.findCommentList());
+        System.out.println(commentUpgradeService.findCommentList());
     }
 
     @Test
     void get() {
-        System.out.println(commentService.findCommentById("65d223992de08a2c5c0426df"));
+//        System.out.println(commentService.findCommentById("65d223992de08a2c5c0426df"));
+        System.out.println(commentUpgradeService.findCommentById("65d23581e5638b6ef02eb5b6"));
     }
 
     @Test
     void update() {
+//        Comment comment = new Comment()
+//                .setId("65d223992de08a2c5c0426df")
+//                .setContent("修改测试数据")
+//                .setNickname("ANTONYCHENG");
+//        commentService.updateComment(comment);
+//        System.out.println(commentService.findCommentById("65d223992de08a2c5c0426df"));
         Comment comment = new Comment()
-                .setId("65d223992de08a2c5c0426df")
-                .setContent("修改测试数据")
-                .setNickname("ANTONYCHENG");
-        commentService.updateComment(comment);
-        System.out.println(commentService.findCommentById("65d223992de08a2c5c0426df"));
+                .setId("65d237de6d491922e516bac6");
+        // 点赞
+        commentUpgradeService.updateComment(comment);
+        System.out.println(commentUpgradeService.findCommentById("65d237de6d491922e516bac6"));
     }
 
     @Test
     void delete() {
-        commentService.deleteCommentById("65d223992de08a2c5c0426df");
-        System.out.println(commentService.findCommentList());
+//        commentService.deleteCommentById("65d223992de08a2c5c0426df");
+//        System.out.println(commentService.findCommentList());
+        commentUpgradeService.deleteCommentById("65d237de6d491922e516bac6");
     }
 
     @Test

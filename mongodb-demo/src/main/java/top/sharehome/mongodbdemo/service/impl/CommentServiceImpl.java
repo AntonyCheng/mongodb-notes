@@ -65,7 +65,7 @@ public class CommentServiceImpl implements CommentService {
      */
     @Override
     public Page<Comment> pageComment(String parentId, int page, int size) {
-        return commentRepository.page(parentId, PageRequest.of(page - 1, size));
+        return commentRepository.findByParentId(parentId, PageRequest.of(page - 1, size));
     }
 
 }
