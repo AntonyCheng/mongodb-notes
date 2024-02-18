@@ -1,0 +1,17 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+spring:
+  application:
+    name: mongodb-demo
+  data:
+    mongodb:
+      # 主机地址
+      host: 127.0.0.1
+      # 数据库
+      database: articledb
+      # 默认端口是27017
+      port: 27017
+      # 也可以使用uri连接
+      #uri: mongodb://192.168.40.134:27017/articledb
