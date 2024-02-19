@@ -24,7 +24,7 @@ public class CommentController {
      * 保存评论
      */
     @PostMapping("/save")
-    public String save(Comment comment) {
+    public String save(@RequestBody Comment comment) {
         commentService.saveComment(comment);
         return "保存成功";
     }
@@ -33,7 +33,7 @@ public class CommentController {
      * 更新评论
      */
     @PutMapping("/update")
-    public String update(Comment comment) {
+    public String update(@RequestBody Comment comment) {
         commentService.updateComment(comment);
         return "更新成功";
     }
