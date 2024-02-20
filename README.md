@@ -657,7 +657,7 @@ db.comment.find({
 
 # 按照条件查询文档，比如我想查询content域中包含"凉开水"的文档
 db.comment.find({
-    content:{$regex:".*凉开水.*"}
+    content:{$regex:"*凉开水*"}
 })
 # $regex 表示使用正则表达式匹配进行模糊查询
 ```
@@ -853,45 +853,696 @@ db.comment.remove({})
 
 #### 统计查询
 
+统计查询使用 `count()` 方法，语法如下：
+
+```cmd
+db.collection.count(query, options)
+```
+
+参数：
+
+| Parameter | Type     | Description                    |
+| --------- | -------- | ------------------------------ |
+| query     | document | 必选。查询选择条件。           |
+| options   | document | 可选。用于修改计数的额外选项。 |
+
+示例：
+
+```cmd
+# 统计所有文档个数
+db.comment.count()
+
+# 统计userid为"1003"的文档个数
+db.comment.count({
+    userid: "1003"
+})
+```
+
 #### 分页查询
+
+分页查询需要 `limit()` 方法和 `skip()` 方法搭配使用，使用 `limit()` 方法来读取指定数量的数据，使用 `skip()` 方法来跳过指定数量的数据，两者同时使用时，不管编码中调用顺序如何，执行顺序都是先 `skip()` 后 `limit()`。
+
+分页命令语法如下：
+
+```cmd
+db.集合名称.find().limit((PAGE-1)*SIZE).skip(SIZE)
+```
+
+示例：
+
+```cmd
+# 第1页，每页2条数
+db.comment.find().skip((1 - 1) * 2).limit(2)
+# 第2页，每页2条数
+db.comment.find().skip((2 - 1) * 2).limit(2)
+# 第3页，每页2条数
+db.comment.find().skip((3 - 1) * 2).limit(2)
+```
 
 #### 排序查询
 
-#### 正则查询
+`sort()` 方法对数据进行排序，`sort()` 方法可以通过参数指定排序的字段，并使用 1 和 -1 来指定排序的方式，其中 1 为升序排列，而 -1 是用于降序排列。
+
+排序命令语法如下：
+
+```cmd
+# 按KEY域升序排序
+db.集合名称.find().sort({KEY:1})
+# 按KEY域降序排序
+db.集合名称.find().sort({KEY:-1})
+```
+
+示例：
+
+```cmd
+# 对userid进行降序排序，同时对点赞量进行升序排序
+db.comment.find().sort({
+    userid:  - 1,
+    likenum: 1
+})
+```
+
+注意：`skip()`，`limilt()`，`sort()` 三个放在一起执行的时候，执行的顺序是先  `sort()`， 然后是 `skip()`，最后是显示的 `limit()`，和命令编码顺序无关。
+
+#### 模糊查询
+
+MongoDB的模糊查询是通过正则表达式的方式实现的。模糊查询命令格式为：
+
+```cmd
+db.集合名称.find({KEY:/正则表达式/})
+# 或
+db.集合名称.find({KEY:{$regex:"正则表达式"}})
+```
+
+示例：
+
+```cmd
+# 查询content包含"凉白开"的文档
+db.comment.find({
+    content:{$regex:".*凉开水.*"}
+})
+db.comment.find({
+    content:/.*凉开水.*/
+})
+```
 
 #### 比较查询
 
+<, <=, >, >= 这个操作符也是很常用的，命令格式如下：
+
+```cmd
+# 大于: field > value
+db.集合名称.find({ field : { $gt: value }})
+# 小于: field < value
+db.集合名称.find({ field : { $lt: value }})
+# 大于等于: field >= value
+db.集合名称.find({ field : { $gte: value }})
+# 小于等于: field <= value
+db.集合名称.find({ field : { $lte: value }})
+# 不等于: field != value
+db.集合名称.find({ field : { $ne: value }})
+```
+
 #### 包含查询
+
+包含使用 `$in` 操作符。 示例如下：
+
+```cmd
+# 查询评论的集合中userid字段包含1003或1004的文档
+db.comment.find({
+    userid: {
+        $in: ["1003", "1004"]
+    }
+})
+```
+
+不包含使用 `$nin` 操作符。 示例如下：
+
+```cmd
+# 查询评论集合中userid字段不包含1003和1004的文档
+db.comment.find({
+    userid: {
+        $nin: ["1003", "1004"]
+    }
+})
+```
 
 #### 条件（与或）查询
 
+如果需要查询同时满足两个以上条件，需要使用 `$and` 操作符将条件进行关联。（相当于 SQL 的 and ） 格式为：
+
+```cmd
+$and:[ { },{ },{ } ]
+```
+
+示例如下：
+
+```cmd
+# 查询评论集合中likenum大于等于700 并且小于2000的文档
+db.comment.find({
+    $and: [{
+        likenum: {
+            $gte: NumberInt(700)
+        }
+    }, {
+        likenum: {
+            $lt: NumberInt(2000)
+        }
+    }]
+})
+# 如果查询涉及到的域均为不同的，比如查询评论集合中nickname为"凯撒"，likenum大于2500的文档
+db.comment.find({
+    likenum: {
+        $gt: 2500
+    },
+    nickname: "凯撒"
+})
+```
+
+如果两个以上条件之间是或者的关系，我们使用 `$or` 操作符进行关联，与前面 `$and` 的使用方式相同格式为：
+
+```cmd
+$or:[ { },{ },{ } ]
+```
+
+示例如下：
+
+```cmd
+# 查询评论集合中userid为1003，或者点赞数小于1000的文档记录
+db.comment.find({
+    $or: [{
+        userid: "1003"
+    }, {
+        likenum: {
+            $lt: 1000
+        }
+    }]
+})
+```
+
 ## 常用命令小结
+
+选择切换数据库：`use articledb`
+
+插入数据：`db.comment.insert({bson数据})`
+
+查询所有数据：`db.comment.find()`
+
+条件查询数据：`db.comment.find({条件})`
+
+查询符合条件的第一条记录：`db.comment.findOne({条件})`
+
+查询符合条件的前几条记录：`db.comment.find({条件}).limit(条数)`
+
+查询符合条件的跳过的记录：`db.comment.find({条件}).skip(条数)`
+
+修改数据：`db.comment.update({条件},{修改后的数据}) 或db.comment.update({条件},{$set:{要修改部分的字段:数据})`
+
+修改数据并自增某字段值：`db.comment.update({条件},{\$inc:{自增的字段:步进值}})`
+
+删除数据：`db.comment.remove({条件})`
+
+统计查询：`db.comment.count({条件})`
+
+模糊查询：`db.comment.find({字段名:/正则表达式/})`
+
+条件比较运算：`db.comment.find({字段名:{\$gt:值}})`
+
+包含查询：`db.comment.find({字段名:{\$in:[值1，值2]}})或db.comment.find({字段名:{\$nin:[值1,值2]}})`
+
+条件连接查询：`db.comment.find({\$and:[{条件1},{条件2}]})或db.comment.find({$​or:[{条件1},{条件2}]})`
 
 # 索引
 
 ## 概述
 
+索引支持在MongoDB中高效地执行查询。如果没有索引，MongoDB必须执行全集合扫描，即扫描集合中的每个文档，以选择与查询语句匹配的文档。这种扫描全集合的查询效率是非常低的，特别在处理大量的数据时，查询可以要花费几十秒甚至几分钟，这对网站的性能是非常致命的。
+
+如果查询存在适当的索引，MongoDB可以使用该索引限制必须检查的文档数。
+
+索引是特殊的数据结构，它以易于遍历的形式存储集合数据集的一小部分。索引存储特定字段或一组字段的值，按字段值排序。索引项的排序支持有效的相等匹配和基于范围的查询操作。
+
+此外，MongoDB还可以使用索引中的排序返回排序结果。
+
+官网文档：https://docs.mongodb.com/manual/indexes/
+
+了解：MongoDB索引使用B树数据结构（确切的说是B-Tree，MySQL是B+Tree）
+
 ## 索引的类型
 
 ### 单域索引
 
+MongoDB支持在文档的单个字段上创建用户定义的升序/降序索引，称为单字段索引（Single Field Index）。
+
+对于单个字段索引和排序操作，索引键的排序顺序（即升序或降序）并不重要，因为MongoDB可以在任何方向上遍历索引。
+
+![image-20240220155600301](./assets/image-20240220155600301.png)
+
 ### 复合索引
 
+MongoDB还支持多个字段的用户定义索引，即复合索引（Compound Index）。
+
+复合索引中列出的字段顺序具有重要意义。例如，如果复合索引由{ userid: 1, score: -1 } 组成，则索引首先按userid正序排序，然后在每个userid的值内，再在按score倒序排序。
+
+![image-20240220160625487](./assets/image-20240220160625487.png)
+
 ### 其他索引
+
+地理空间索引（Geospatial Index）、文本索引（Text Indexes）、哈希索引（Hashed Indexes）。
+
+**地理空间索引（Geospatial Index）**
+
+为了支持对地理空间坐标数据的有效查询，MongoDB提供了两种特殊的索引：返回结果时使用平面几何的二维索引和返回结果时使用球面几何的二维球面索引。
+
+**文本索引（Text Indexes）**
+
+MongoDB提供了一种文本索引类型，支持在集合中搜索字符串内容。这些文本索引不存储特定于语言的停止词（例如“the”、“a”、“or”），而将集合中的词作为词干，只存储根词。
+
+**哈希索引（Hashed Indexes）**
+
+为了支持基于散列的分片，MongoDB提供了散列索引类型，它对字段值的散列进行索引。这些索引在其范围内的值分布更加随机，但只支持相等匹配，不支持基于范围的查询。
 
 ## 索引的管理操作
 
 ### 索引的查看
 
+**说明：**
+
+返回一个集合中的所有索引的数组。
+
+**语法：**
+
+```cmd
+db.collection.getIndexes()
+```
+
+**提示：**该语法命令运行要求是MongoDB 3.0+
+
+**示例：**
+
+```cmd
+> db.comment.getIndexes()
+[
+    {
+        "v": 2,
+        "key": {
+            "_id": 1
+        },
+        "name": "_id_",
+        "ns": "articledb.comment"
+    }
+]
+```
+
+结果中显示的是默认 `_id` 索引。
+
+默认 `_id` 索引：MongoDB在创建集合的过程中，在 `_id` 字段上创建一个唯一的索引，默认名字为 `_id_` ，该索引可防止客户端插入两个具有相同值的文档，您不能在 `_id` 字段上删除此索引。
+
+**注意：**该索引是唯一索引，因此值不能重复，即 `_id` 值不能重复的。在分片集群中，通常使用 `_id` 作为片键。
+
 ### 索引的创建
 
+**说明：**
+
+在集合上创建索引。
+
+**语法：**
+
+```cmd
+db.collection.createIndex(keys, options)
+```
+
+**参数：**
+
+| Parameter | Type     | Description                                                  |
+| --------- | -------- | ------------------------------------------------------------ |
+| keys      | document | 必选。包含字段和值对的文档，其中字段是索引键，值描述该字段的索引类型。对于字段上的升序索引，请指定值1；对于降序索引，请指定值-1。比如： {字段:1或-1} ，其中1 为指定按升序创建索引，如果你想按降序来创建索引指定为 -1 即可。另外，MongoDB支持几种不同的索引类型，包括文本、地理空间和哈希索引。 |
+| options   | document | 可选。包含一组控制索引创建的选项的文档。有关详细信息，请参见选项详情列表。 |
+
+options（更多选项）列表：
+
+| Parameter          | Type          | Description                                                  |
+| ------------------ | ------------- | ------------------------------------------------------------ |
+| background         | Boolean       | 建索引过程会阻塞其它数据库操作，background可指定以后台方式创建索引，即增加 "background" 可选参数。 "background" 默认值为false。 |
+| unique             | Boolean       | 建立的索引是否唯一。指定为true创建唯一索引。默认值为false。  |
+| name               | string        | 索引的名称。如果未指定，MongoDB的通过连接索引的字段名和排序顺序生成一个索引名称。 |
+| dropDups           | Boolean       | 3.0+版本已废弃。在建立唯一索引时是否删除重复记录,指定 true 创建唯一索引。默认值为false。 |
+| sparse             | Boolean       | 对文档中不存在的字段数据不启用索引；这个参数需要特别注意，如果设置为true的话，在索引字段中不会查询出不包含对应字段的文档.。默认值为 false。 |
+| expireAfterSeconds | integer       | 指定一个以秒为单位的数值，完成 TTL 设定，设定集合的生存时间。 |
+| v                  | index version | 索引的版本号。默认的索引版本取决于 mongod 创建索引时运行的版本。 |
+| weights            | document      | 索引权重值，数值在 1 到 99,999 之间，表示该索引相对于其他索引字段的得分权重。 |
+| default_language   | string        | 对于文本索引，该参数决定了停用词及词干和词器的规则的列表。 默认为英语。 |
+| language_override  | string        | 对于文本索引，该参数指定了包含在文档中的字段名，语言覆盖默认的language，默认值为language。 |
+
+**提示：**
+
+注意在 3.0.0 版本前创建索引方法为 `db.collection.ensureIndex()` ，之后的版本使用了 `db.collection.createIndex()` 方法，`ensureIndex()` 还能用，但只是 `createIndex()` 的别名。
+
+**示例：**
+
+（1）单字段索引示例：对 `userid` 字段建立索引：
+
+```cmd
+> db.comment.createIndex({
+    userid: 1
+  })
+# 参数：1 表示按升序创建索引；-1 表示按降序创建索引。
+{
+    "createdCollectionAutomatically": false,
+    "numIndexesBefore": 1,
+    "numIndexesAfter": 2,
+    "ok": 1
+}
+```
+
+查看一下创建后的索引：
+
+```cmd
+> db.comment.getIndexes()
+[
+    {
+        "v": 2,
+        "key": {
+            "_id": 1
+        },
+        "name": "_id_",
+        "ns": "articledb.comment"
+    },
+    {
+        "v": 2,
+        "key": {
+            "userid": 1
+        },
+        "name": "userid_1",
+        "ns": "articledb.comment"
+    }
+]
+```
+
+（2）复合索引：对 `userid` 和 `nickname` 同时建立复合（Compound）索引：
+
+```cmd
+> db.comment.createIndex({
+    userid: 1,
+    nickname:  - 1
+  })
+# 参数：1 表示按升序创建索引；-1 表示按降序创建索引。
+ {
+    "createdCollectionAutomatically": false,
+    "numIndexesBefore": 2,
+    "numIndexesAfter": 3,
+    "ok": 1
+}
+```
+
+查看一下创建后的索引：
+
+```cmd
+> db.comment.getIndexes()
+[
+    {
+        "v": 2,
+        "key": {
+            "_id": 1
+        },
+        "name": "_id_",
+        "ns": "articledb.comment"
+    },
+    {
+        "v": 2,
+        "key": {
+            "userid": 1
+        },
+        "name": "userid_1",
+        "ns": "articledb.comment"
+    },
+    {
+        "v": 2,
+        "key": {
+            "userid": 1,
+            "nickname": - 1
+        },
+        "name": "userid_1_nickname_-1",
+        "ns": "articledb.comment"
+    }
+]
+```
+
 ### 索引的移除
+
+**说明：**
+
+可以移除指定的索引，或移除所有索引。
+
+#### 指定索引的移除
+
+**语法：**
+
+```cmd
+db.collection.dropIndex(index)
+```
+
+**参数：**
+
+| Parameter | Type               | Description                                                  |
+| --------- | ------------------ | ------------------------------------------------------------ |
+| index     | string or document | 指定要删除的索引。可以通过索引名称或索引规范文档指定索引。若要删除文本索引，请指定索引名称。 |
+
+**示例：**
+
+删除 `comment` 集合中 `userid` 字段上的升序索引：
+
+```cmd
+> db.comment.dropIndex({
+    userid: 1
+})
+ {
+    "nIndexesWas": 3,
+    "ok": 1
+}
+```
+
+#### 所有索引的移除
+
+**语法：**
+
+```cmd
+db.collection.dropIndexes()
+```
+
+**示例：**删除 `comment` 集合中所有索引。
+
+```cmd
+> db.comment.dropIndexes()
+{
+    "nIndexesWas": 2,
+    "msg": "non-_id indexes dropped for collection",
+    "ok": 1
+}
+```
+
+**提示：**`_id` 的字段的索引是无法删除的，只能删除非 `_id` 字段的索引。
 
 ## 索引的使用
 
 ### 执行计划
 
+分析查询性能（Analyze Query Performance）通常使用执行计划（解释计划、Explain Plan）来查看查询的情况，如查询耗费的时间、是否基于索引查询等。
+
+那么，通常，我们想知道，建立的索引是否有效，效果如何，都需要通过执行计划查看。
+
+**语法：**
+
+```cmd
+db.collection.find(query,options).explain(options)
+```
+
+**示例：**查看根据userid查询数据的情况。
+
+```cmd
+> db.comment.find({
+    userid: "1003"
+  }).explain()
+{
+    "queryPlanner": {
+        "plannerVersion": 1,
+        "namespace": "articledb.comment",
+        "indexFilterSet": false,
+        "parsedQuery": {
+            "userid": {
+                "$eq": "1003"
+            }
+        },
+        "winningPlan": {
+            "stage": "COLLSCAN",
+            "filter": {
+                "userid": {
+                    "$eq": "1003"
+                }
+            },
+            "direction": "forward"
+        },
+        "rejectedPlans": []
+    },
+    "serverInfo": {
+        "host": "9ef3740277ad",
+        "port": 27017,
+        "version": "4.0.10",
+        "gitVersion": "c389e7f69f637f7a1ac3cc9fae843b635f20b766"
+    },
+    "ok": 1
+}
+```
+
+关键点看：`"stage" : "COLLSCAN"`，表示全集合扫描。
+
+下面对 `userid` 建立索引：
+
+```cmd
+> db.comment.createIndex({
+    userid: 1
+  })
+{
+    "createdCollectionAutomatically": false,
+    "numIndexesBefore": 1,
+    "numIndexesAfter": 2,
+    "ok": 1
+}
+```
+
+再次查看执行计划：
+
+```cmd
+> db.comment.find({
+    userid: "1013"
+  }).explain()
+{
+    "queryPlanner": {
+        "plannerVersion": 1,
+        "namespace": "articledb.comment",
+        "indexFilterSet": false,
+        "parsedQuery": {
+            "userid": {
+                "$eq": "1013"
+            }
+        },
+        "winningPlan": {
+            "stage": "FETCH",
+            "inputStage": {
+                "stage": "IXSCAN",
+                "keyPattern": {
+                    "userid": 1
+                },
+                "indexName": "userid_1",
+                "isMultiKey": false,
+                "multiKeyPaths": {
+                    "userid": []
+                },
+                "isUnique": false,
+                "isSparse": false,
+                "isPartial": false,
+                "indexVersion": 2,
+                "direction": "forward",
+                "indexBounds": {
+                    "userid": [
+                        "[\"1013\", \"1013\"]"
+                    ]
+                }
+            }
+        },
+        "rejectedPlans": []
+    },
+    "serverInfo": {
+        "host": "9ef3740277ad",
+        "port": 27017,
+        "version": "4.0.10",
+        "gitVersion": "c389e7f69f637f7a1ac3cc9fae843b635f20b766"
+    },
+    "ok": 1
+}
+```
+
+关键点看：`"stage" : "IXSCAN"`，基于索引的扫描
+
 ### 涵盖的查询
+
+当查询条件和查询的投影仅包含索引字段时，MongoDB直接从索引返回结果，而不扫描任何文档或将文档带入内存。 这些覆盖的查询可以非常有效。
+
+![image-20240220164617940](./assets/image-20240220164617940.png)
+
+**更多：**https://www.mongodb.com/docs/manual/core/query-optimization/#read-operations-covered-query
+
+**示例：**
+
+```cmd
+> db.comment.find({
+    userid: "1003"
+  }, {
+    userid: 1,
+    _id: 0
+  })
+{
+    "userid": "1003"
+}
+{
+    "userid": "1003"
+}
+
+> db.comment.find({
+    userid: "1003"
+  }, {
+    userid: 1,
+    _id: 0
+  }).explain()
+{
+    "queryPlanner": {
+        "plannerVersion": 1,
+        "namespace": "articledb.comment",
+        "indexFilterSet": false,
+        "parsedQuery": {
+            "userid": {
+                "$eq": "1003"
+            }
+        },
+        "winningPlan": {
+            "stage": "PROJECTION",
+            "transformBy": {
+                "userid": 1,
+                "_id": 0
+            },
+            "inputStage": {
+                "stage": "IXSCAN",
+                "keyPattern": {
+                    "userid": 1
+                },
+                "indexName": "userid_1",
+                "isMultiKey": false,
+                "multiKeyPaths": {
+                    "userid": []
+                },
+                "isUnique": false,
+                "isSparse": false,
+                "isPartial": false,
+                "indexVersion": 2,
+                "direction": "forward",
+                "indexBounds": {
+                    "userid": [
+                        "[\"1003\", \"1003\"]"
+                    ]
+                }
+            }
+        },
+        "rejectedPlans": []
+    },
+    "serverInfo": {
+        "host": "bobohost.localdomain",
+        "port": 27017,
+        "version": "4.0.10",
+        "gitVersion": "c389e7f69f637f7a1ac3cc9fae843b635f20b766"
+    },
+    "ok": 1
+}
+```
 
 # 文章评论模块
 
