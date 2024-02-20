@@ -64,8 +64,9 @@ public class CommentServiceImpl implements CommentService {
      * 分页
      */
     @Override
-    public Page<Comment> pageComment(String parentId, int page, int size) {
-        return commentRepository.findByParentId(parentId, PageRequest.of(page - 1, size));
+    public Page<Comment> pageComment(int page, int size) {
+        // PageRequest 的页码是从0开始的
+        return commentRepository.findAllBy(PageRequest.of(page - 1, size));
     }
 
 }

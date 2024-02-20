@@ -68,7 +68,7 @@ public class CommentController {
      */
     @GetMapping("/page")
     public Page<Comment> page(String parentId, int page, int size) {
-        return commentService.pageComment(parentId, page, size);
+        return commentService.pageComment(page, size);
     }
 
 }

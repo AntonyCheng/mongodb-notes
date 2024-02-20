@@ -40,6 +40,6 @@ public interface CommentService {
     /**
      * 分页
      */
-    Page<Comment> pageComment(String parentId,int page,int size);
+    Page<Comment> pageComment(int page,int size);
 
 }

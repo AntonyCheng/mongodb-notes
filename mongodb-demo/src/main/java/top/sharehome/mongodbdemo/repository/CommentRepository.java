@@ -20,4 +20,6 @@ public interface CommentRepository extends MongoRepository<Comment, String> {
      * 根据上级Id分页
      */
     Page<Comment> findByParentId(String parentId, Pageable pageable);
+
+    Page<Comment> findAllBy(Pageable pageable);
 }

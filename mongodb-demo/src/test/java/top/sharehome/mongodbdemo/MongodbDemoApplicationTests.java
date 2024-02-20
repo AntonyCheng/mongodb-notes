@@ -95,7 +95,7 @@ class MongodbDemoApplicationTests {
                 .setParentId(parentId);
         commentService.saveComment(comment1);
         commentService.saveComment(comment2);
-        Page<Comment> comments = commentService.pageComment(parentId, 1, 5);
+        Page<Comment> comments = commentService.pageComment(1, 5);
         System.out.println("总数：" + comments.getTotalElements());
         System.out.println("总页数：" + comments.getTotalPages());
         System.out.println("当前数据：" + comments.getContent());
