@@ -71,7 +71,7 @@
 
 解释：“三高”需求：
 
-- High performance - 对数据库高并发读写的需求。
+- High Performance - 对数据库高并发读写的需求。
 - Huge Storage - 对海量数据的高效率存储和访问的需求。
 - High Scalability && High Availability- 对数据库的高可扩展性和高可用性的需求。
 
